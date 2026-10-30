@@ -1,0 +1,23 @@
+#!/bin/sh
+# Start the Mobile Forces dedicated server (START_EXE).
+#
+# Runs `UCC.exe server <map>?Game=<class>[?options] ini=<MF_INI>` from System/ under Wine. Server
+# settings live in MF_INI (see the 30-ConfigureMobileForces hook); any START_ARGS are appended.
+set -e
+
+system="${SERVER_ROOT:-/config/Merged}/System"
+
+if [ ! -f "$system/UCC.exe" ]; then
+    echo "System/UCC.exe not found in ${SERVER_ROOT:-/config/Merged}. Put a Mobile Forces install in /config/Server." >&2
+    exit 1
+fi
+
+url="${MF_MAP:-mf-Carpark}"
+[ -z "$MF_GAME_TYPE" ] || url="$url?Game=$MF_GAME_TYPE"
+[ -z "$MF_URL_OPTIONS" ] || url="$url?${MF_URL_OPTIONS#\?}"
+
+echo "Starting: UCC.exe server $url ini=${MF_INI:-Server.ini} log=server.log $*"
+
+# UCC resolves packages and inis relative to its working directory
+export WINE_WORKDIR="$system"
+exec wine-run UCC.exe server "$url" "ini=${MF_INI:-Server.ini}" log=server.log "$@"
